@@ -18,8 +18,8 @@ Bienvenue dans le projet de Bibliothèque Personnelle & Sociale. Cette applicati
 
 1.  **Cloner le dépôt** :
     ```bash
-    git clone <votre-repo>
-    cd <dossier>
+    git clone https://github.com/Jago-ral/biblioapp.git
+    cd biblioapp
     ```
 
 2.  **Installer les dépendances** :
@@ -65,4 +65,4 @@ Une documentation Swagger complète est disponible à l'adresse `/api-doc` une f
 
 ## Auteur
 
-Développé par [Votre Nom/Agent] pour le projet "Personal & Social Library".
+Développé par KEGLOH Yawo Edo 
