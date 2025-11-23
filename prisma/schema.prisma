@@ -1,0 +1,175 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?
+  access_token       String?
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+
+  // App relations
+  userBooks     UserBook[]
+  reviews       Review[]
+  comments      Comment[]
+  userBadges    UserBadge[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// --- Application Models ---
+
+model Book {
+  id          String   @id @default(cuid())
+  googleId    String   @unique // Google Books ID
+  title       String
+  authors     String   // JSON encoded array or comma separated
+  description String?
+  pageCount   Int?
+  categories  String?  // JSON encoded array or comma separated
+  thumbnail   String?
+  language    String?
+  publishedDate String?
+
+  userBooks   UserBook[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model UserBook {
+  id        String   @id @default(cuid())
+  userId    String
+  bookId    String
+  status    String   // READING, COMPLETED, TO_READ
+  rating    Int?     // 1-5
+  currentPage Int    @default(0)
+  startDate DateTime?
+  finishDate DateTime?
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  reviews         Review[]
+  readingSessions ReadingSession[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, bookId])
+}
+
+model Review {
+  id          String   @id @default(cuid())
+  userBookId  String
+  userId      String   // Direct link for easier queries
+  content     String
+  rating      Int      // Copy of UserBook rating or specific for review
+
+  userBook    UserBook @relation(fields: [userBookId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comments    Comment[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  reviewId  String
+  userId    String
+  content   String
+
+  review    Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Badge {
+  id          String   @id @default(cuid())
+  code        String   @unique // e.g. "FIRST_BOOK", "100_PAGES"
+  name        String
+  description String
+  iconUrl     String?
+  category    String   // READING, SOCIAL, COLLECTION
+
+  userBadges  UserBadge[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  badgeId   String
+  awardedAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+}
+
+model ReadingSession {
+  id              String   @id @default(cuid())
+  userBookId      String
+  durationMinutes Int
+  pagesRead       Int
+  date            DateTime @default(now())
+
+  userBook        UserBook @relation(fields: [userBookId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
